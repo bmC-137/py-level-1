@@ -68,8 +68,6 @@ def buildURL(base_url, option):
 
 def showProducts(base_url, option):
     u=buildURL(base_url, option)
-    # complete_url=base_url + option
-    # content=getContent(complete_url)
     result=[]
     for i in u:
         try:
