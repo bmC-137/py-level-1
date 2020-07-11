@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-__author__ = 'kilroy'
-#  (c) 2014, WasHere Consulting, Inc.
-#  Written for Infinite Skills
 
 # this requires Python 3 to function properly
 import os, sys, re, argparse

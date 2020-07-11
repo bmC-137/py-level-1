@@ -1,8 +1,5 @@
 #!/usr/bin/python
 
-import pcapy
-from struct import *
-
 pcap_file = pcapy.open_offline("file.pcap")
 count = 1
 

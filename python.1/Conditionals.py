@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-__author__ = 'kilroy'
-#  (c) 2014, WasHere Consulting, Inc.
-#  Written for Infinite Skills
 
 # input is a string unless converted
 x = int(input("Give me a number "))

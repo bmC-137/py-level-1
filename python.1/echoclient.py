@@ -1,7 +1,4 @@
 # Copyright (c) Twisted Matrix Laboratories.
-# See LICENSE for details.
-
-"""
 An example client. Run simpleserv.py first before running this.
 """
 from twisted.internet import reactor, protocol

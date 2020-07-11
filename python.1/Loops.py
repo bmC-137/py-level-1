@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-__author__ = 'kilroy'
-
-name=input("What is your name? ")
 
 #  for loop ... range creates a list
 for i in range(1,10):

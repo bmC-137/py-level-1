@@ -1,8 +1,5 @@
 #!/usr/bin/python
 
-import pcapy
-from struct import *
-
 cap = pcapy.open_live("eth0", 65536, 1, 0)
 
 while 1:

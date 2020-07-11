@@ -1,7 +1,4 @@
 # Copyright (c) Twisted Matrix Laboratories.
-# See LICENSE for details.
-
-from twisted.internet import reactor, protocol
 
 class Echo(protocol.Protocol):
     """This is just about the simplest possible protocol"""

@@ -1,7 +1,4 @@
 #!/usr/bin/python3
-#  (c) 2014, WasHere Consulting, Inc
-import struct
-
 f = open("win-ntfs.dd", "rb")
 
 bpb = bytearray()
