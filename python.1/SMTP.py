@@ -16,8 +16,8 @@ try:
 #    f = open("myfile", "r")
 #    m = MIMEText(f.read())
 #    f.close()
-#    m['To'] = "kilroy@cloudroy.com"
-#    m['From'] = "ricmessier@gmail.com"
+#    m['To'] = "bm@itenv.net"
+#    m['From'] = "bmc-137@itenv.net"
 #    m['Subject'] = "This is a message to you"
 
     m = "\nThis is a message from the last session"

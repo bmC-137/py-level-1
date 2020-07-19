@@ -88,4 +88,4 @@ with open(inputFileName, 'r') as fileHandle:
                 eachRecord.clear()
 
 
-fileHandle.close()
+ileHandle.close()

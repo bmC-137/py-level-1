@@ -2,7 +2,7 @@
 
 import os, datetime
 
-rootdir = "/Users/kilroy"
+rootdir = "/Users/bm"
 searchdate = datetime.date.today()-datetime.timedelta(days=3)
 
 for curr, dirs, files in os.walk(rootdir):
