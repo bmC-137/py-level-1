@@ -1,21 +1,33 @@
 import string
 import random
 import requests
-from pprint import pprint
-import time
 import multiprocessing
+import datetime
+import argparse
+# from pprint import pprint
+import re
+import json
 
+'''
+	run with random generated properties
+	python post.py  
 
-# To.Do
+	run with defaultValue properties
+	python post.py --with-defaults
+'''
 
-
-# 3. Fix end Types of URL for better Posts
-# 4. Try to clean... and structure it
-# 5. make menu, with options.... whyyy... for training.
-
-base_url = 'https://api.exmaple.com/dev/index.php'
+base_url = 'https://api.example.com/dev/index.php'
 empty = ''
-emptyspace = ' '
+
+
+def genDate():
+	sdate = datetime.date(1753, 1, 1)
+	edate = datetime.date(2020, 1, 1)
+	time_between_dates = edate - sdate
+	days_between_dates = time_between_dates.days
+	random_number_of_days = random.randrange(days_between_dates)
+	random_date = sdate + datetime.timedelta(days=random_number_of_days)
+	return random_date
 
 
 def genString(size):
@@ -28,19 +40,19 @@ def genString(size):
 	return ''.join(s)
 
 
-def genIntStr(max):
-	random_string = ''.join([random.choice(string.ascii_lowercase + string.ascii_uppercase) for n in range(max)])
+def genIntStr(max_):
+	random_string = ''.join([random.choice(string.ascii_lowercase + string.ascii_uppercase) for n in range(max_)])
 	return random_string
 
 
-def genFloat(min, max):
-	b = random.randint(min, max)
+def genFloat(min_, max_):
+	b = random.randint(min_, max_)
 	r = random.randint(0, 99) / 100
 	return b + r
 
 
-def genInt(min, max):
-	random_int = int(random.randint(min, max))
+def genInt(min_, max_):
+	random_int = int(random.randint(min_, max_))
 	return random_int
 
 
@@ -48,8 +60,8 @@ def toInt(val):
 	try:
 		v = int(val)
 		return v
-	except (ValueError, TypeError):
-		print('errurr')
+	except (ValueError, TypeError) as e:
+		print('error in toInt: ', e)
 		return 0
 
 
@@ -71,77 +83,70 @@ def extract_urlType(parameters):
 
 def extract_default_values(parameters):
 	result = dict()
+	result_ = dict()
 	for param in parameters:
 		if 'defaultValue' in param:
 			result[param['name']] = param['defaultValue']
-	return result
+	for key in result.keys():
+		result[key] = result[key].replace('\n', '')
+		result[key] = re.sub('[ \' ]', '', result[key])
+		result_ = json.loads(result[key])
+	return result_
 
 
 def data_gen(type_, min_, max_):
 	# global val_
 	min_ = int(min_)
 	max_ = int(max_)
-	# print(type_, min_, max_)
 	try:
 		if 'empty_string' in type_:
 			val_ = empty
 		elif type_ == 'int':
 			val_ = genInt(min_, max_)
-		elif type_ == 'string':
+		elif type_ == 'string' or type_ == 'string|int' or type_ == 'Array' or type_ == 'array|string':
 			val_ = genString(max_)
-		elif type_ == 'string|int':
-			try:
-				val_ = genString(max_)
-			except:
-				val_ = int(10)
 		elif type_ == 'float':
 			val_ = genFloat(min_, max_)
-		elif type_ == 'Array':
-			val_ = genString(max_)
-		elif type_ == 'array|string':
-			val_ = genString(max_)
+		elif type_ == 'boolean':
+			tORf = ['True', 'False']
+			val_ = random.choice(tORf)
+		elif type_ == 'date':
+			val_ = genDate()
 		elif type_:
-			print('Generating random string for type: ', type_)
+			print('Type: ', type_, 'is not set. Generating random string, if max not set is 5')
 			val_ = genString(max_)
 		else:
 			pass
-	except (ValueError, UnboundLocalError):
-		# print(e)
+	except (ValueError, UnboundLocalError) as e:
+		print('Error in data_gen function: ', e)
 		pass
 	return val_
 
 
 def makePostReq(url, payload, addr):
-	def func1(u, p):
-		r = requests.post(u, json=p)
+	def func1(u_, p_):
+		r = requests.post(u_, json=p_)
 		print(r.text)
-
 	try:
-		if url and payload and addr:
+		if url and payload:
 			u = url
 			p = payload
-			a = addr
 			func1(u, p)
 	except:
+		print('Error in makePostReq: ', addr)
 		pass
 
 
 class makePost:
 	def __init__(self):
+		manager = multiprocessing.Manager()
+		self.l1 = manager.list([])
+		self.l2 = manager.list([])
 		self.payload = {}
 		self.propertiesList = []
 		self.allowValues = []
 		self.newPayload = {}
 		self.uniq_values = []
-		#### junk lists
-		self.listErrors = []
-		self.listNoErrors = []
-		self.listNoDataType = []
-
-	def printInfo(self):
-		print('List with Errors, or addresses the script wasnt able to send POST request:', self.listErrors)
-		print('POST List: ', self.listNoErrors)
-		print('Missing dataType List: ', self.listNoDataType)
 
 	def uniqValues(self):
 		l = set(self.allowValues)
@@ -176,17 +181,16 @@ class makePost:
 		if len(self.allowValues) == 0:
 			pass
 		else:
-			print('POST Value types : ', self.uniqValues())
+			self.uniqValues()
 
 	def makeJob(self, resource):
 		apis = requests.get(base_url + resource['path']).json()['apis']
+		namespace_arg = vars(defaults)
 		for api in apis:
 			post_url = base_url + api['path']
 			post_element = post_url.split('/')
 			url_description = base_url + '/resources/' + post_element[6]
 			for operation in api['operations']:
-				# if (operation['httpMethod'] == 'POST' and operation['nickname'] == 'create'):
-				# start_time = time.time()
 				if operation['httpMethod'] == 'POST':
 					if '/delete/' in api['path'] or \
 							'oversizes' in api['path'] or \
@@ -199,91 +203,81 @@ class makePost:
 						continue
 					try:
 						dataType = extract_dataType(operation['parameters'])
-						# url_type = extract_urlType(operation['parameters'])
-						# pprint(url_type)
-						if dataType == 'none' or dataType == 'null' or dataType == empty or dataType == emptyspace:
-							print(post_element[6])
-							self.listNoDataType.append(post_element[6])
-							continue
 						get_dataType = requests.get(url_description).json()['models'][dataType]
 						self.propertiesList = []
 						for prop in get_dataType['properties']:
 							self.propertiesList.append(prop)
 						self.payload = {prop: empty for prop in self.propertiesList}
-						print('POST to: ' + base_url + api['path'] + ': ')
-						print('URL parameters:' + url_description)
-						# POST Value Types:
+
 						self.cleanUniqValues()
+						self.l1.append(post_element[6])
 						self.findValues(post_element[6])
-						for k in self.payload:
-							element = post_element[6]
-							url_gen = \
-								requests.get(base_url + '/resources' + '/' + element).json()['models'][dataType][
-									'properties'][k]
-							# print(url_gen)
-							min_ = 1
-							max_ = 5
-							type_ = empty
+						if namespace_arg['with_defaults'] == 42:
 							try:
-								# if url_gen['type'] == 'Array' or \
-								# 		url_gen['type'] == 'boolean' or \
-								# 		url_gen['type'] == 'Parameter' or \
-								# 		url_gen['type'] == 'ApprovalMsg' or \
-								# 		url_gen['type'] == 'ReminderMsg' or \
-								# 		url_gen['type'] == 'UpdateQRMsg':
-								# 	continue
-								type_ = url_gen['type']
-								max_ = url_gen['maximum']
-								min_ = url_gen['minimum']
-								# print(randomInt)
-								if '@max 10' in url_gen['description']:
-									max_ = 10
-							except:
-								pass
-							pp = data_gen(type_, min_, max_)
-							# print(k, pp)
-							self.newPayload[k] = pp
-						# print(pp)
-						# print(len(self.uniq_values))
-						pprint(self.newPayload)
+								# default_values = dict()
+								default_values = extract_default_values(operation['parameters'])
+								self.newPayload = default_values
+							except KeyError as e:
+								print('default_values KeyError', e)
+						else:
+							for k in self.payload:
+								element = post_element[6]
+								url_gen = \
+									requests.get(base_url + '/resources' + '/' + element).json()['models'][dataType][
+										'properties'][k]
+								min_ = 1
+								max_ = 5
+								type_ = empty
+								try:
+									type_ = url_gen['type']
+									max_ = url_gen['maximum']
+									min_ = url_gen['minimum']
+									# if url_gen['type'] == 'Array' or \
+									# 		url_gen['type'] == 'boolean' or \
+									# 		url_gen['type'] == 'Parameter' or \
+									# 		url_gen['type'] == 'ApprovalMsg' or \
+									# 		url_gen['type'] == 'ReminderMsg' or \
+									# 		url_gen['type'] == 'UpdateQRMsg':
+									# 	continue
+									try:
+										setDescription = url_gen['description']
+										if '@max 10' in url_gen['description']:
+											max_ = 10
+										searchDate = "date"
+										if searchDate.lower() in setDescription.lower():
+											type_ = searchDate
+									except:
+										pass
+								except:
+									pass
+								pp = data_gen(type_, min_, max_)
+								self.newPayload[k] = pp
+								if 'actionType' in k or 'action' in k:
+									self.newPayload[k] = empty
 						if len(self.uniq_values) == 0:
 							url_ = base_url + api['path']
 							makePostReq(url_, self.newPayload, api['path'])
 						else:
-							# print(self.uniq_values)
 							for u_ in self.uniq_values:
-								# print(u_)
 								url_ = base_url + api['path'].format(type=u_)
 								print(url_)
 								makePostReq(url_, self.newPayload, api['path'])
-						self.listNoErrors.append(post_element[6])
-						# self.clearData()
-						# self.cleanUniqValues()
-					except KeyError:
-						self.listErrors.append(post_element[6])
-						pass
-					except ValueError:
-						print('ValueError...')
+						print('request.POST to: ' + base_url + api['path'] + ': ')
+						print('URL parameters:' + url_description)
+					except (KeyError, ValueError) as e:
+						self.l2.append(post_element[6])
+						print('Error in ', post_element[6], e)
 						pass
 					print('\n')
-					self.cleanUniqValues()
-					self.clearPayload()
-					# duration = time.time() - start_time
-					# print(f"It took {duration} seconds")
-	# exit()
-
-
-	# def getInfo(self):
-	# 	# global resource
-	# 	resources = requests.get(base_url + '/resources').json()['apis']
-	# 	for resource in resources:
-	# 		self.makeJob(resource)
 
 	def getInfo(self):
-		# global resource
 		resources = requests.get(base_url + '/resources').json()['apis']
 		with multiprocessing.Pool() as pool:
 			pool.map(self.makeJob, resources)
+
+	def printInfo(self):
+		print('POSTed: ', self.l1, end='\n')
+		print('Errors: ', self.l2)
 
 	def clearData(self):
 		self.payload = {}
@@ -292,11 +286,12 @@ class makePost:
 
 runMe = makePost()
 
-
-
 if __name__ == '__main__':
-	start_time = time.time()
+	ap = argparse.ArgumentParser()
+	ap.add_argument('--with-defaults', action='store_const', required=False, const=42, default='')
+	defaults = ap.parse_args()
+	start_time = datetime.datetime.now()
 	runMe.getInfo()
+	duration = datetime.datetime.now() - start_time
+	print(f'For {len(runMe.l1)} POST requests it took {duration} seconds for gathering all the resrouces properties')
 	runMe.printInfo()
-	duration = time.time() - start_time
-	print(f'For {len(runMe.listNoErrors)} POST requests it took {duration} seconds for gathering all the resrouces properties')
