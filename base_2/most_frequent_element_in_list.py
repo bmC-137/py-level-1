@@ -49,6 +49,7 @@ d.get => gets the value associated with that key
 ##
 
 print('Test.3 with set and list and max')
+# seems not very accurate.... like test 1
 # def most_frequent1(List):
 #     return max(set(List), key=List.count)
 print('Max Value is: ', max(set(c), key=c.count), end='\n\n\n\n')
@@ -57,7 +58,7 @@ print('Max Value is: ', max(set(c), key=c.count), end='\n\n\n\n')
 ##
 ##
 
-print('Test.4 with counter')
+print('Test.4 with counter from collections')
 from collections import Counter
 
 
@@ -68,4 +69,20 @@ def most_freq(l_):
 
 b_ = most_freq(c)
 for key, value in b_:
-	print('Most Freq:', key, 'wich repeated:', value)
+	print('Most Freq:', key, 'wich repeated:', value, end='\n\n\n\n\n')
+
+
+##
+##
+##
+##
+
+print('Test.5 with finding mode from statistics')
+import statistics
+from statistics import mode
+
+def most_common(ll):
+	return mode(ll)
+
+print(most_common(c))
+
